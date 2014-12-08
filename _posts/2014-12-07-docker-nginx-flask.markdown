@@ -65,7 +65,7 @@ This will run a container named `flaskapp` based on the image we created in Step
 
 ### **4. Build nginx image**
 
-Given that nginx is a stable piece of software and I probably don't need to muck around with a running nginx container, I just used the official Debian-based nginx image. We'll crete a `server` block in the nginx config to proxy through to our flask app. Create a new directory (doesn't matter where) and create the following `Dockerfile`:
+Given that nginx is a stable piece of software and I probably don't need to muck around with a running nginx container, I just used the official Debian-based nginx image. We'll create a `server` block in the nginx config to proxy through to our flask app. Create a new directory (doesn't matter where) and create the following `Dockerfile`:
 
 {% highlight ruby %}
 FROM nginx:1.7.8
@@ -100,7 +100,3 @@ The `--link` flag links the nginx container to the app container and exposes it 
 
 
 That's it, we're done! To access your app, find your boot2docker VM IP using `boot2docker ip` and navigate to `http://$IP:8080` in your favorite browser.
-
-[jekyll]:      http://jekyllrb.com
-[jekyll-gh]:   https://github.com/jekyll/jekyll
-[jekyll-help]: https://github.com/jekyll/jekyll-help
