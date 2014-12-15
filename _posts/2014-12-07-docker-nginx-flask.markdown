@@ -19,8 +19,10 @@ With all the talk about Docker, I couldn't find a simple step-by-step tutorial t
 
 ##Overview
 
-Docker best practices recommend one process per container, so we will need 2 containers, one each for nginx and your flask app. In practice, you will need a third database container, but for simplification, I have omitted it.  Only the nginx container will be accessible to the outside world. The flask application container will only be accessible
+Docker best practices recommend one process per container, so we will need two containers [^1], one each for nginx and your flask app. In practice, you will need a third database container, but for simplification, I have omitted it.  Only the nginx container will be accessible to the outside world. The flask application container will only be accessible
 from the nginx container; in fact, it doesn't even need network access. This process isolation is a major benefit touted by Docker.
+
+[^1]: [fig](http://www.fig.sh/) seems to be a nice tool for managing multi-container setups. However, if you're like me, you'll want to understand Docker from the bottom-up before reaching for higher-level tools.
 
 ## Step-by-step walkthrough
 
@@ -29,9 +31,9 @@ The objective of this tutorial is to quickly get you up and running, so I don't 
 ### **1. Create a Dockerfile for your Flask app**
 
 The nice thing about Docker images is that they're extensible - you simply inherit most of the work that someone else has
-already done for you and add your stuff to it. There is an official debian-based [Python image](https://registry.hub.docker.com/_/python/), however, I prefer running CentOS given that I'm familiar with the ecosystem, especially yum. I couldn't find a CentOS 6 image with Python 2.7.8, so I created one [here](https://registry.hub.docker.com/u/juggernaut/centos-python/).
+already done for you and add your stuff to it. There is an official debian-based [Python image](https://registry.hub.docker.com/_/python/). However, I prefer running CentOS given that I'm familiar with the ecosystem, especially yum. I couldn't find a CentOS 6 image with Python 2.7.8, so I created one [here](https://registry.hub.docker.com/u/juggernaut/centos-python/).
 
-Now, let's create a Dockerfile for your flask app. Create a file named `Dockerfile` in your flask app's root directory. I assume your app is called `flaskapp` and `app.py` runs it.
+Now, let's create a Dockerfile for your flask app using the CentOS python image as base. Create a file named `Dockerfile` in your flask app's root directory. I assume your app is called `flaskapp` and `app.py` runs it.
 
 {% highlight ruby %}
 FROM juggernaut/centos-python:centos6
@@ -48,6 +50,8 @@ CMD ["/opt/services/flaskapp/venv/bin/python2.7", "/opt/services/flaskapp/app.py
 All this does is copy your source directory into the container, install virtualenv and exposes the default flask port (more on this later).
 
 ### **2. Build Flask app image**
+
+From your flask app's root directory, run this:
 
 {% highlight bash %}
 docker build -t flaskapp .
