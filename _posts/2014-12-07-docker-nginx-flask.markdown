@@ -44,7 +44,7 @@ VOLUME ["/opt/services/flaskapp/src"]
 WORKDIR /opt/services/flaskapp
 RUN virtualenv-2.7 venv && source venv/bin/activate && pip install -r src/requirements.txt
 EXPOSE 5000
-CMD ["/opt/services/flaskapp/venv/bin/python2.7", "/opt/services/flaskapp/app.py"]
+CMD ["/opt/services/flaskapp/venv/bin/python2.7", "/opt/services/flaskapp/src/app.py"]
 {% endhighlight %}
 
 All this does is copy your source directory into the container, install virtualenv and exposes the default flask port (more on this later).
