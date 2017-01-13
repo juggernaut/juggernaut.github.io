@@ -6,7 +6,7 @@ categories: docker nginx python
 ---
 Recently, I bought a new Macbook Pro for my development needs. Migrating my development environment from my old Fedora-based box turned out to be a nightmare, mostly because I'd installed stuff willy-nilly with no way to repeatably recreate it. I decided to do it the Right Way<sup>TM</sup> this time. I've worked with [Vagrant](https://www.vagrantup.com/) before, but I decided to check out this Docker thing that the [Hacker News](https://news.ycombinator.com/) crowd is going ga-ga over.
 
-##Requirements
+## Requirements
 
 My app is fairly standard - a python flask app fronted by an nginx reverse-proxy that also serves static content.
 
@@ -17,7 +17,7 @@ I had the following (reasonable) requirements:
 
 With all the talk about Docker, I couldn't find a simple step-by-step tutorial that shows you how to create such a setup, so here it is.
 
-##Overview
+## Overview
 
 Docker best practices recommend one process per container, so we will need two containers [^1], one each for nginx and your flask app. In practice, you will need a third database container, but for simplification, I have omitted it.  Only the nginx container will be accessible to the outside world. The flask application container will only be accessible
 from the nginx container; in fact, it doesn't even need network access. This process isolation is a major benefit touted by Docker.
