@@ -19,7 +19,7 @@ I have a standard web application setup with 3 containers - an nginx reverse pro
 
 ![Legacy Setup]({{ site.baseurl }}/assets/MigratingLegacyLinksLegacySetup.png)
 
-With my earlier setup, I used container links (`--link`) to allow nginx to talk to the web container, and the web container to talk to the DB container. Links inject host and port information as environment variables in the container which is convenient. However, the drawback is that they're fairly static and you can't add/remove links without restarting the container.
+With my earlier setup, I used container links (`--link`) to allow nginx to talk to the web container, and the web container to talk to the DB container. Links inject host and port information as environment variables in the container which is convenient. However, the drawback is that they're fairly static and you can't add/remove links without restarting the container. And of course, the fact that they're deprecated.
 
 ## Proposed Setup
 
@@ -34,6 +34,10 @@ The setup is pictured below.
 ![Proposed Setup]({{ site.baseurl }}/assets/MigratingLegacyLinksProposedSetup.png)
 
 ## Getting there
+
+For any serious production deployment of a multi-container setup like this, you'll want to use an orchestration tool like [Docker Compose](https://docs.docker.com/compose/).
+In general, my philosophy is to learn how things work under the hood before reaching for tools that do the magic for you. As such, we'll create the setup using only the
+base set of docker commands.
 
 ### Step 1
 
