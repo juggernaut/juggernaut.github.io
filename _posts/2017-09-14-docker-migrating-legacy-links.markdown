@@ -4,8 +4,8 @@ title:  "Migrating from legacy container links"
 date:   2017-09-14 18:40:23
 categories: "docker"
 ---
-In a [previous post]({{ site.baseurl }}{% post_url 2014-12-07-docker-nginx-flask %}), I wrote about how I set up a simple containerized flask app.
-I haven't had to mess with it much since then - the last time I touched it was about a year ago. A year is basically eons in Docker time,
+In a [previous post]({{ site.baseurl }}{% post_url 2014-12-07-docker-nginx-flask %}), I wrote about how I set up a simple dockerized flask app.
+I haven't had to mess with it much since then; the last time I touched it was about a year ago. A year is basically eons in Docker time,
 so it wasn't a surprise when an update to Docker all but rendered my setup obsolete. Specifically, [container links](https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks) are now marked deprecated with a warning that the feature may eventually be removed.
 
 ## Enter User-Defined Networks
@@ -14,19 +14,26 @@ User-defined networks are virtual networks that you can create. I run my contain
 so I'll create a `bridge` network. All containers on the same `bridge` network can talk to each other via either IPs or container names.
 Also, a container can be part of multiple bridge networks (more on this later).
 
-## My legacy setup
+## My Legacy Setup
 I have a standard web application setup with 3 containers - an nginx reverse proxy, a web container running flask and a DB container running Postgres.
 
-#Diagram here
+![Legacy Setup]({{ site.baseurl }}/assets/MigratingLegacyLinksLegacySetup.png)
 
 With my earlier setup, I used container links (`--link`) to allow nginx to talk to the web container, and the web container to talk to the DB container. Links inject host and port information as environment variables in the container which is convenient. However, the drawback is that they're fairly static and you can't add/remove links without restarting the container.
 
+## Proposed Setup
+
 For the purposes of migration, I could create a single bridge network, connect all 3 containers to this network and call it a day (recall
 that containers on the same bridge network can talk to each other by default). However, we don't want the nginx container to be able to communicate
-with the DB container in accordance with the principle of least privilege. Not only is this a good security practice, but also forces you to
+with the DB container in accordance with the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege). Not only is this a good security practice, but also forces you to
 think through dependencies between your application components.
 
-This is where I want to get to. ANother diagram here.
+To that end, we will create two separate bridge networks: `web_nw` to connect the nginx and flask containers, and `db_nw` to connect the flask and Postgres containers.
+The setup is pictured below.
+
+![Proposed Setup]({{ site.baseurl }}/assets/MigratingLegacyLinksProposedSetup.png)
+
+## Getting there
 
 ### Step 1
 
@@ -72,7 +79,7 @@ $ docker network connect web_nw flaskapp
 {% endhighlight %}
 
 Note that the `docker run` command takes only a single network argument, so if you want to connect a container to multiple networks you need to 
-use a separate `docker network connect` command after starting up the conatiner.
+use a separate `docker network connect` command after starting up the container.
 
 ### Step 4
 
@@ -97,3 +104,9 @@ server {
 {% endhighlight %}
 
 The hostname `flaskapp` resolves just fine since the `flaskapp` container is running on the same bridge network as the nginx container.
+
+## Summary
+
+Migrating to user-defined networks required a slight re-design and some extra work, but it makes my setup a lot more flexible and powerful.
+In my next post, I'll show you how I can deploy a new version of my flask app in a separate container and dynamically reload the nginx configuration to
+point to the new container with zero downtime.
