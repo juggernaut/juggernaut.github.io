@@ -12,28 +12,9 @@ go here to try it out.
 
 ## Recap
 
-My 3-container setup is pictured below
+My 3-container setup is pictured below as explained in my [previous post]({{ site.baseurl }}{% post_url 2017-09-14-docker-migrating-legacy-links %}).
 
 ![Proposed Setup]({{ site.baseurl }}/assets/MigratingLegacyLinksProposedSetup.png)
-
-## Building the flask app container
-
-The application code itself is fairly simple; it displays a "Signup" form and stores the signup data in Postgres.
-The flask container is the only one we'll create a `Dockerfile` for (to install the python dependencies and the code into the container):
-
-{% highlight bash %}
-FROM python:3
-
-ENV PYTHONUNBUFFERED 1
-RUN mkdir -p /opt/services/flaskapp/src
-# We copy the requirements.txt file first to avoid cache invalidations
-COPY requirements.txt /opt/services/flaskapp/src/
-WORKDIR /opt/services/flaskapp/src
-RUN pip install -r requirements.txt
-COPY . /opt/services/flaskapp/src
-EXPOSE 5090
-CMD ["python", "app.py"]
-{% endhighlight %}
 
 ## First attempt
 
@@ -154,3 +135,27 @@ volumes:
 Note that you need to declare the volume at the top-level to reference it in the `db` service section.
 Now we see that the database volume data is preserved across runs. If you want to actually delete the volume,
 pass the `--volumes` option to `docker-compose down`
+
+## Container startup order
+
+Our `docker-compose.yml` is still not quite ready yet - `docker-compose up` attempts to start containers in parallel,
+meaning that our flask container could come up before the db container, and die because it can't find the db. We'll
+tell docker-compose to start the `db` container before the `flaskapp` container by specifying a dependency:
+
+<pre>
+  flaskapp:
+    build: .
+    env_file:
+      - env_file
+    volumes:
+      - .:/opt/services/flaskapp/src
+    networks:
+      - db_nw
+      - web_nw<b>
+    depends_on:
+      - db</b>
+</pre>
+
+In theory, this doesn't actually solve the "race condition" because the postgres process could take a while to start up
+and docker has no way of knowing when it's "done" starting up. However, in my experience, it works well enough in practice
+for this example.

@@ -10,3 +10,6 @@ github_username:  juggernaut
 
 # Build settings
 markdown: kramdown
+future: true
+#plugins:
+#  - jekyll-time-to-read
