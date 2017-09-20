@@ -12,7 +12,7 @@ go here to try it out.
 
 ## Recap
 
-My 3-container setup is pictured below as explained in my [previous post]({{ site.baseurl }}{% post_url 2017-09-14-docker-migrating-legacy-links %}).
+My 3-container setup is pictured below as explained in the [previous post]({{ site.baseurl }}{% post_url 2017-09-14-docker-migrating-legacy-links %}).
 
 ![Proposed Setup]({{ site.baseurl }}/assets/MigratingLegacyLinksProposedSetup.png)
 
@@ -114,7 +114,7 @@ The [documentation](https://docs.docker.com/compose/overview/#preserve-volume-da
 > When `docker-compose` up runs, if it finds any containers from previous runs, it copies the volumes from the old container to the new container. This process ensures that any data you’ve created in volumes isn’t lost.
 
  So imagine my surprise when I did a `docker-compose down && docker-compose up -d` and found out that the database schema I created earlier
-was lost! Turns out that volume data is only preserved for _named volumes_; since we didn't specify a named volume mount in the compose yaml,
+was lost! Turns out that volume data is copied across runs only for _named volumes_; since we didn't specify a named volume mount in the compose yaml,
 `docker-compose` creates a new anonymous volume each time the `db` container is started. To remedy this, we'll mount a named volume.
 Additions are highlighted in bold:
 
@@ -159,3 +159,60 @@ tell docker-compose to start the `db` container before the `flaskapp` container 
 In theory, this doesn't actually solve the "race condition" because the postgres process could take a while to start up
 and docker has no way of knowing when it's "done" starting up. However, in my experience, it works well enough in practice
 for this example.
+
+## Putting it all together
+
+The final piece is to hook up our nginx reverse proxy to the flask container. We'll use this very simple config to proxy
+all requests to flask:
+
+<pre>
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_set_header   Host                 $host;
+        proxy_set_header   X-Real-IP            $remote_addr;
+        proxy_set_header   X-Forwarded-For      $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto    $scheme;
+        proxy_set_header Host $http_host;
+
+        proxy_pass http://flaskapp:5090;
+    }
+}
+</pre>
+
+Notice that the hostname in `proxy_pass` is just the service name, `flaskapp`. Docker's embedded DNS server
+will automagically resolve it to the IP of the actual container(s) running the service.
+
+The nginx container will be the only "public" entry point to our cluster, so let's map it to port 8080 of the host.
+
+<pre>
+  nginx:
+    image: "nginx:1.13.5"<b>
+    ports:
+      - "8080:80"</b>
+    volumes:
+      - ./conf.d:/etc/nginx/conf.d
+    networks:
+      - web_nw
+</pre>
+
+Finally, we'll bring up the cluster with
+{% highlight bash %}
+$ docker-compose up -d
+{% endhighlight %}
+
+Browse to localhost:8080 in your browser, and you should see the "Hello, please sign up!" message.
+
+## Summary
+
+`docker-compose` provides a robust, repeatable way to manage multi-container clusters. It also provides the
+ability to easily scale your services. For example, to scale the flaskapp service to 2 containers, just run:
+
+{% highlight bash %}
+$ docker-compose up -d --scale flaskapp=2
+{% endhighlight %}
+
+This will start a second container running flaskapp. In theory, nginx _should_ automatically round-robin requests
+between the 2 containers. But does it actually? Find out in my next post 😁
