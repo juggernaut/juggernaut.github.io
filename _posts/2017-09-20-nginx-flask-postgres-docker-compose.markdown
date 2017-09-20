@@ -8,7 +8,7 @@ In my [previous post]({{ site.baseurl }}{% post_url 2017-09-14-docker-migrating-
 As I mentioned in that post, I preferred to start with just the basic docker commands to avoid "magic" as much as possible. However, as expected, running
 multiple docker commands by hand or in a shell script is far too brittle. Docker Compose is the recommended tool to manage multi-container deployments.
 For illustrative purposes, I've extracted a subset of my code and posted a fully functional example on GitHub. If you're the impatient type,
-go here to try it out. 
+go [here](https://github.com/juggernaut/nginx-flask-postgres-docker-compose-example) to try it out. 
 
 ## Recap
 
@@ -68,7 +68,7 @@ services:
       - db_nw
 </pre>
 
-This still doesn't solve the issue of creating our database schema. Our flask app declares the `SQLAlchemy` models, so 
+This still doesn't solve the issue of creating our database schema. Our flask app declares SQLAlchemy [models](https://github.com/juggernaut/nginx-flask-postgres-docker-compose-example/blob/master/models.py), so 
 let's create the schema from them. Create a `database.py` with an `init_db` function to create the schema:
 
 {% highlight python %}
@@ -216,3 +216,5 @@ $ docker-compose up -d --scale flaskapp=2
 
 This will start a second container running flaskapp. In theory, nginx _should_ automatically round-robin requests
 between the 2 containers. But does it actually? Find out in my next post 😁
+
+You can find the full working example on my GitHub [here](https://github.com/juggernaut/nginx-flask-postgres-docker-compose-example).
