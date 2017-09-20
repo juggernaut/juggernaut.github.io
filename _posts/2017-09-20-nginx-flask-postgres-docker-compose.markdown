@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Nginx+Flask+Postgres multi-container setup with Docker Compose"
-date:   2017-09-18 18:40:23
+date:   2017-09-20 18:40:23
 categories: "docker"
 ---
 In my [previous post]({{ site.baseurl }}{% post_url 2017-09-14-docker-migrating-legacy-links %}), I wrote about how I migrated my app to use user-defined networks.
