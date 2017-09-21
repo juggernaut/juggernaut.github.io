@@ -6,7 +6,9 @@ categories: "docker"
 ---
 In my [previous post]({{ site.baseurl }}{% post_url 2017-09-14-docker-migrating-legacy-links %}), I wrote about how I migrated my app to use user-defined networks.
 As I mentioned in that post, I preferred to start with just the basic docker commands to avoid "magic" as much as possible. However, as expected, running
-multiple docker commands by hand or in a shell script is far too brittle. Docker Compose is the recommended tool to manage multi-container deployments.
+multiple docker commands by hand or in a shell script is far too brittle. [Docker Compose](https://docs.docker.com/compose/)
+is the recommended tool to manage multi-container deployments. In this blog post, I'll detail how I redid my setup using `docker-compose`.
+
 For illustrative purposes, I've extracted a subset of my code and posted a fully functional example on GitHub. If you're the impatient type,
 go [here](https://github.com/juggernaut/nginx-flask-postgres-docker-compose-example) to try it out. 
 
@@ -98,14 +100,14 @@ Let's first bring up only the DB container:
 $ docker-compose up -d db
 {% endhighlight %}
 Notice the refreshing lack of `--env-file` or `--network` flags we would have had to pass in a plain `docker run` command.
-This is because we've already specified those in the `docker-compose.yml` file.
+This is because we've already specified them in the `docker-compose.yml` file.
 
 Now, we'll run a one-off flask container that will create the schema:
 {% highlight bash %}
 $ docker-compose run --rm flaskapp /bin/bash -c "cd /opt/services/flaskapp/src && python -c  'import database; database.init_db()'"
 {% endhighlight %}
 
-Notice the `--rm` flag that indicates the container should be deleted immediately after completion. 
+Notice the `--rm` flag to indicate that the container should be deleted immediately after completion. 
 
 ### A note about volumes
 
@@ -133,7 +135,7 @@ volumes:
 </pre>
 
 Note that you need to declare the volume at the top-level to reference it in the `db` service section.
-Now we see that the database volume data is preserved across runs. If you want to actually delete the volume,
+Now we see that the database volume data is preserved across runs. If you do actually want to delete the volume,
 pass the `--volumes` option to `docker-compose down`
 
 ## Container startup order
