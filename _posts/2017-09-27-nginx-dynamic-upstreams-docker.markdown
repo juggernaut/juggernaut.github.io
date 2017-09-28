@@ -170,7 +170,7 @@ ip = container.attrs['NetworkSettings']['Networks']['web_nw']['IPAddress']
 where `web_nw` is the user-defined network that both nginx and the web containers are connected to.
 
 We can now render these IPs into an nginx config using our favorite templating framework like [jinja2](http://jinja.pocoo.org/)
-I'm lazy so I just rolled my own with `str.replace()` :)
+I'm lazy so I just rolled my own with `str.replace()` 😁
 
 ### Reloading nginx
 
