@@ -91,7 +91,7 @@ Like all workarounds, there are drawbacks to the above approach. Sine we can't s
 provided by nginx's [upstream module](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream) like load-balancing policies,
 weights and health checks.
 
-If we could somehow update the `upstream` list dynamically as docker adds/removes containers, then reload nginx,
+If we could somehow update the `upstream` list dynamically as docker adds/removes containers, then reload nginx on the fly,
 we could have the best of both worlds. Docker provides a handy [event stream](https://docs.docker.com/engine/reference/commandline/events/) 
 that we can hook into and listen for container lifecycle events. There are tools out there that already do this, which leads me to my
 disclaimer:
@@ -114,7 +114,7 @@ for event in client.events(filters=event_filters, decode=True):
 {% endhighlight %}
 
 But this captures events for _all_ containers managed by our system Docker. We only want to capture container events for our `web` service.
-One way could be to filter by container name - as of version 1.14.0 of _docker-compose_ container names seem to follow a format of
+One way could be to filter by container name - as of version 1.14.0 of _docker-compose_, container names seem to follow a format of
 _$project\_$service\_$index_, so if we have 2 containers of the `flaskapp` service in a project called `myproj`, they would have
 names `myproj_flaskapp_1` and `myproj_flaskapp_2`. However, relying on implementation details seems wrong; there must be a better way.
 
@@ -139,7 +139,7 @@ Now we can update the `event_filters` to include a label:
 event_filters = {'type': 'container', <b>'label': 'com.ameyalokare.type=web'</b>}
 </pre>
 
-### Updating upstream server list
+### Finding the list of upstream container IPs
 
 Our python script needs to maintain a list of currently running `web` containers, and if this list changes, we'll reload nginx.
 Let's use a _dict_ mapping container_ids to container_objects for this:
@@ -158,3 +158,31 @@ for event in client.events(filters=event_filters, decode=True):
     # TO BE IMPLEMENTED
     # update_config_and_reload_nginx(client, web_servers)
 {% endhighlight %}
+
+Great, so now all we need to do is render the list of container IPs in the nginx `upstream` block and reload it.
+Turns out, getting the IP from a [Container object](https://docker-py.readthedocs.io/en/stable/containers.html#container-objects) is not 
+exactly intuitive. There is no `ip` property or `getIP()` method, and even then a container could have multiple IPs since it can be connected
+to multiple networks. The best way I could find was to traverse the `attrs` property:
+{% highlight python %}
+ip = container.attrs['NetworkSettings']['Networks']['web_nw']['IPAddress']
+{% endhighlight %}
+
+where `web_nw` is the user-defined network that both nginx and the web containers are connected to.
+
+We can now render these IPs into an nginx config using our favorite templating framework like [jinja2](http://jinja.pocoo.org/)
+I'm lazy so I just rolled my own with `str.replace()` :)
+
+### Reloading nginx
+
+Reloading nginx after changing the config turns out to be trivial. We simply need to send it a `SIGHUP`:
+{% highlight python %}
+nginx_containers = client.containers.list(filters={'label' : args.nginx_label, 'status': 'running'})
+for container in nginx_containers:
+    container.kill(signal='SIGHUP')
+{% endhighlight %}
+
+## Summary
+
+Deploying nginx in a dynamic container environment takes a little work, especially if you don't want to pay the big bucks
+for NGINX Plus. I wrote a low-tech python script for learning how things work under the hood; find it on my [Github](https://github.com/juggernaut/nginx-flask-postgres-docker-compose-example/blob/auto-reload-nginx-with-python/auto_reload_nginx.py). There are open-source reverse-proxy solutions that are built specifically for container environments, like
+[traefik](https://traefik.io/). Traefik obviates the need for nginx altogether, but if you still want to run nginx, consider [nginx-proxy](https://github.com/jwilder/nginx-proxy).
