@@ -38,11 +38,12 @@ open source projects are written using them. Docker is written in Go and Servo i
 I worked through tutorials for both languages, and wrote up a pros and cons list for each.
 
 ### Golang
+
 **Pros:**
 * Simple, easy to learn
 * Wide adoption, backed by Google
 * Garbage collected
-* Built-in concurrency constructs (channels)
+* Built-in concurrency constructs (goroutines)
 
 **Cons:**
 * Allows nulls
