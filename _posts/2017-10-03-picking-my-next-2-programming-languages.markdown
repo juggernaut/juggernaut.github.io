@@ -1,8 +1,8 @@
 ---
 layout: post
 title:  "Picking my next two programming languages"
-date:   2017-09-27 18:40:23
-categories: "rust,kotlin"
+date:   2017-10-03 18:40:23
+categories: rust kotlin
 ---
 
 I believe a competent backend developer should be proficient in at least one language in each of three categories:
@@ -88,8 +88,39 @@ This limits our search to languages that primarily target the JVM as their runti
 ### The candidates
 
 The obvious candidates are Clojure, Scala and Kotlin. I prefer a statically typed language for large application codebases, so that leaves us with Scala and Kotlin.
-Scala is a language with a massive footprint. I also admit to being
-a little bit biased here - in my anecdotal experience, a lot of Scala programmers I've met have been ivory-tower programmers, more
-interested in debating Category Theory than getting shit done.
+I created the pros and cons lists as before:
 
-Kotlin is lightweight, has coroutines built into the language and comes with excellent support in my IDE of choice (IntelliJ).
+### Scala
+
+**Pros:**
+* Wide adoption by companies like Twitter, LinkedIn etc.
+* Much stronger type system than Java.
+* Can write purely functional code, purely imperative or a mixture of both. 
+
+**Cons:**
+* Massive feature footprint 
+* Steep learning curve
+* No built-in async-await
+
+### Kotlin
+
+**Pros**:
+* Lightweight
+* Shorter learning curve coming from Java
+* Built-in coroutines
+* Excellent IntelliJ support since it's made by the same company
+
+**Cons**:
+* New kid on the block, not much adoption/production usage.
+* Coroutines are still experimental as of this writing.
+
+### And the winner is...
+**Kotlin**. The main factor in favor of Kotlin was the tighter feature set and lightweight-ness, if that's a word.
+I also admit to being a little bit biased here - in my anecdotal experience, a lot of Scala programmers I've met have been ivory-tower programmers, more
+interested in debating Category Theory than getting shit done. In comparison, Kotlin just feels more pragmatic.
+
+## Summary
+
+Learning a new programming language in addition to its ecosystem takes months to years. I realize I'm being ambitious by choosing not one but two languages
+to learn. The hope is that this endeavor will help me become a better programmer, and who knows I may even end up writing code professionally in one of these
+languages in the future!
