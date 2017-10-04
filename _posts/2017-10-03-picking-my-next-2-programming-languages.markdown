@@ -5,10 +5,12 @@ date:   2017-10-03 18:40:23
 categories: rust kotlin
 ---
 
+(**TL;DR** [Rust](https://www.rust-lang.org) and [Kotlin](https://kotlinlang.org/), read on to find out why...)
+
 I believe a competent backend developer should be proficient in at least one language in each of three categories:
 1. **Systems programming**: Used for writing lower-level software ranging from operating system kernels to network programming. 
 2. **Scripting**: Used for writing test automation, one-off scripts and various system administration tasks.
-3. **Application programming**: Used for writing line-of-business applications like accounting software, office software etc.
+3. **Application programming**: Used for writing line-of-business applications like accounting software and web application backends.
 
 Note that the lines between these categories are often blurred and a programming language can be a good fit for writing
 software in multiple categories. Nevertheless, the classification serves as a good rule of thumb.
@@ -33,7 +35,7 @@ write memory safe code by default.
 ### The candidates
 
 Without spending time doing too much analysis, I chose Go and Rust simply because some of the most popular
-open source projects are written using them. Docker is written in Go and Servo is Rust's flagship project.
+open source projects are written using them. [Docker](https://www.docker.com/) is written in Go and [Servo](https://servo.org/) is Rust's flagship project.
 
 I worked through tutorials for both languages, and wrote up a pros and cons list for each.
 
@@ -43,7 +45,7 @@ I worked through tutorials for both languages, and wrote up a pros and cons list
 * Simple, easy to learn
 * Wide adoption, backed by Google
 * Garbage collected
-* Built-in concurrency constructs (goroutines)
+* Built-in concurrency constructs ([goroutines](https://gobyexample.com/goroutines))
 
 **Cons:**
 * Allows nulls
@@ -53,10 +55,10 @@ I worked through tutorials for both languages, and wrote up a pros and cons list
 ### Rust
 **Pros:**
 * Non-nullability by default
-* Advanced memory safety features (borrow-checker)
+* Advanced memory safety features ([borrow-checking](https://doc.rust-lang.org/1.8.0/book/references-and-borrowing.html))
 * Functional programming constructs built-ins
 * Backed by Mozilla
-* Standard package manager (cargo)
+* Standard package manager ([Cargo](http://doc.crates.io/))
 
 **Cons:**
 * Not as widely adopted
@@ -83,7 +85,7 @@ remains.
 
 I'm looking for less verbose language that allows me to express business logic without getting in the way.
 However, I have no intent of abandoning the Java ecosystem. The JVM is simply the best runtime out there.
-This limits our search to languages that primarily target the JVM as their runtime.
+This limits my search to languages that primarily target the JVM.
 
 ### The candidates
 
@@ -100,14 +102,14 @@ I created the pros and cons lists as before:
 **Cons:**
 * Massive feature footprint 
 * Steep learning curve
-* No built-in async-await
+* No built-in async-await, although there is a [pending proposal](http://docs.scala-lang.org/sips/pending/async.html)
 
 ### Kotlin
 
 **Pros**:
 * Lightweight
 * Shorter learning curve coming from Java
-* Built-in coroutines
+* Built-in [coroutines](https://kotlinlang.org/docs/reference/coroutines.html)
 * Excellent IntelliJ support since it's made by the same company
 
 **Cons**:
