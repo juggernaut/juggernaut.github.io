@@ -13,8 +13,8 @@ I believe a competent backend developer should be proficient in at least one lan
 Note that the lines between these categories are often blurred and a programming language can be a good fit for writing
 software in multiple categories. Nevertheless, the classification serves as a good rule of thumb.
 
-I'm currently comfortable writing Java, Python and C; probably a little _too_ comfortable. Growth happens when you step out of 
-your comfort zone from time to time. In that spirit, I've been pondering picking up a new programming language or two to
+I'm currently comfortable writing Java, Python and C; probably a little _too_ comfortable. I believe that growth happens when you step out of 
+your comfort zone. In that spirit, I've been pondering picking up a new programming language or two to
 broaden my horizons.
 
 Turns out this is an exciting time for programming languages; I have several new ones to choose from!  This post details my (rather unscientific)
@@ -62,23 +62,32 @@ I worked through tutorials for both languages, and wrote up a pros and cons list
 * Learning curve is steeper due to new concepts like variable lifetimes
 * Concurrency constructs like async/await are not built-in
 
-A big reason I was swayed in Rust's favor was no nulls by default.
+### And the winner is..
+
+**Rust**. As I wrote the lists, it became clear to me that Go doesn't really offer that much over my primary language, Java.
+In comparison, Rust has some really novel concepts, allowing you to write memory-safe code without a garbage collector. However,
+the biggest factor that swayed me in favor of Rust was non-nullability by default. Tony Hoare called null references
+the "billion dollar mistake" and the creators of Rust seems to have taken note.
 
 ## Scripting
 
-Staying with python
+Python hits the sweet spot for me here. I use it for all of my automation tasks, and I just don't feel the need to reach for
+something new here.
 
 ## Application programming
 
-Java is the ten-thousand pound gorilla in this space. Java has been my primary programming language for the last few years. Even though
-features like (limited) type inference and Java 8 functional constructs have alleviated a lot of the verbosity, the baggage still
-remains. I'm looking for a more lightweight language that allows me to express business logic without getting in the way.
-I have no intent of abandoning the Java ecosystem. The JVM is simply the best runtime out there. This limits our search to languages
-that have (FIXME) the JVM as their primary target.
+Java is the ten-thousand pound gorilla in this space. It gets a lot of hate, but I actually really like Java. I do admit, though,
+that it can get too verbose at times. Even though features like type inference and Java 8 functional constructs have alleviated a lot of the verbosity, the baggage still
+remains. 
+
+I'm looking for less verbose language that allows me to express business logic without getting in the way.
+However, I have no intent of abandoning the Java ecosystem. The JVM is simply the best runtime out there.
+This limits our search to languages that primarily target the JVM as their runtime.
 
 ### The candidates
 
-Clojure - eliminated due to dynamically typed. That leaves us with Scala and Kotlin. Scala is a language with a massive footprint. I also admit to being
+The obvious candidates are Clojure, Scala and Kotlin. I prefer a statically typed language for large application codebases, so that leaves us with Scala and Kotlin.
+Scala is a language with a massive footprint. I also admit to being
 a little bit biased here - in my anecdotal experience, a lot of Scala programmers I've met have been ivory-tower programmers, more
 interested in debating Category Theory than getting shit done.
 
