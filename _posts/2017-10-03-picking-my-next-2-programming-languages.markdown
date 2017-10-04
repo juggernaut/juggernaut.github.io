@@ -25,7 +25,7 @@ process of how I chose what language(s) to learn.
 ## Systems programming
 
 C has been and still is the undisputed king of systems programming. Most major operating systems and databases are written
-in C. The first programming language I learned was C, and it quickly became (by default :)) my favorite programming language.
+in C. The first programming language I learned was C, and it quickly became (by default 😁 ) my favorite programming language.
 Although it has served us well over the decades, C isn't without faults. It is not [memory safe](https://en.wikipedia.org/wiki/Memory_safety),
 which has resulted in thousands of security vulnerabilities and bugs. Even code written by experienced programmers, in well-maintained 
 open-source software like [nginx](https://nvd.nist.gov/vuln/detail/CVE-2009-2629)
