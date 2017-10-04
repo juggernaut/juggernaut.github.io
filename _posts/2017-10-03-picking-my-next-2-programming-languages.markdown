@@ -33,7 +33,9 @@ write memory safe code by default.
 ### The candidates
 
 Without spending time doing too much analysis, I chose Go and Rust simply because some of the most popular
-open source projects are being written in them. Docker (Go) and Firefox (Rust) (FiXME)
+open source projects are written using them. Docker is written in Go and Servo is Rust's flagship project.
+
+I worked through tutorials for both languages, and wrote up a pros and cons list for each.
 
 ### Golang
 **Pros:**
@@ -68,7 +70,7 @@ Staying with python
 
 ## Application programming
 
-Java is the 10 thousand pound gorilla in this space. Java has been my primary programming language for the last few years. Even though
+Java is the ten-thousand pound gorilla in this space. Java has been my primary programming language for the last few years. Even though
 features like (limited) type inference and Java 8 functional constructs have alleviated a lot of the verbosity, the baggage still
 remains. I'm looking for a more lightweight language that allows me to express business logic without getting in the way.
 I have no intent of abandoning the Java ecosystem. The JVM is simply the best runtime out there. This limits our search to languages
