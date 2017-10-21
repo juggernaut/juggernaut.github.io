@@ -78,7 +78,9 @@ error[E0308]: match arms have incompatible types
    | |_________^ expected &str, found struct `std::string::String`
 ```
 
-Recall in my earlier post, that a string literal is actually a string slice. So our None arm is returning a string slice, but our Some arm is returning the owned String struct member. Turns out we can conveniently use ref in a pattern match to borrow a reference. Again, recalling that &String can be coerced to &str, this solves our type mismatch problem.
+Recall in my earlier post, that a string _literal_ is actually a string _slice_. So our `None` arm is returning a string slice,
+but our `Some` arm is returning the _owned_ `String` struct member. Turns out we can conveniently use `ref` in a pattern match
+to borrow a reference. Again, recalling that `&String` can be coerced to `&str`, this solves our type mismatch problem.
 
 {% highlight rust %}
 println!("Jon's middle name is {}",
@@ -92,41 +94,61 @@ println!("Jon's middle name is {}",
 This works!
 
 ## Option methods
-Pattern matching is nice, but `Option` also provides several useful methods. We can achieve what we did in the previous section with unwrap_or():
+Pattern matching is nice, but `Option` also provides several useful methods. We can achieve what we did in the previous section with `unwrap_or()`:
 
+{% highlight rust %}
 println!("Alice's middle name is {}",
     alice.middle.unwrap_or("No middle name!".to_owned()));
-map
+{% endhighlight %}
 
-map() is used to transform Option values. For example, we could use map() to print only the middle initial:
+### map
 
+`map()` is used to transform `Option` values. For example, we could use `map()` to print only the middle initial:
+
+{% highlight rust %}
 println!(
     "Alice's full name is {} {} {}",
     alice.first,
     alice.middle.map(|m| &m[0..1]).unwrap_or(""), // Extract first letter of middle name if it exists
     alice.last
 );
+{% endhighlight %}
+
 However, this fails to compile with the very clear error:
 
+```
 42 | |         alice.middle.map(|m| &m[0..1]).unwrap_or(""),
    | |                               -     ^ `m` dropped here while still borrowed
    | |                               |
    | |                               borrow occurs here
-Ah, so map() consumes the contained value, which means the value does not live past the scope of the map() call! Luckily, the as_ref() method of Option allows us to borrow a reference to the contained value:
+```
 
+Ah, so `map()` _consumes_ the contained value, which means the value does not live past the scope of the `map()` call!
+Luckily, the `as_ref()` method of `Option` allows us to borrow a reference to the contained value:
+
+{% highlight rust %}
 println!(
     "Alice's full name is {} {} {}",
     alice.first,
     alice.middle.as_ref().map(|m| &m[0..1]).unwrap_or(""), // as_ref() converts Option<String> to Option<&String>
     alice.last
 );
-Instead of first using map() to transform to another Option and then unwrapping it, we can use the convenience method map_or() which allows us to do this in one call:
+{% endhighlight %}
 
+Instead of first using `map()` to transform to another `Option` and then unwrapping it, we can use the convenience
+method `map_or()` which allows us to do this in one call:
+
+{% highlight rust %}
 alice.middle.as_ref().map_or("", |m| &m[0..1])
-and_then
+{% endhighlight %}
 
-and_then() is another method that allows you to compose Options (equivalent to flatmap in other languages). Suppose we have a function that returns a nickname for a real name, if it knows one. For example, here is such a function (admittedly, one that has a very limited worldview):
+### and_then
 
+`and_then()` is another method that allows you to compose Options (equivalent to flatmap in other languages).
+Suppose we have a function that returns a nickname for a real name, if it knows one. For example, here is such a
+function (admittedly, one that has a very limited worldview):
+
+{% highlight rust %}
 fn get_alias(name: &str) -> Option<&str> {
     match name {
         "Bob" => Some("The Builder"),
@@ -134,9 +156,17 @@ fn get_alias(name: &str) -> Option<&str> {
         _ => None,
     }
 }
+{% endhighlight %}
+
 Now, to figure out a person’s middle name’s nickname (slightly nonsensical, but bear with me here), we could do:
 
+{% highlight rust %}
 let optional_nickname = alice.middle.as_ref().and_then(|m| get_nickname(&m));
 println!("Alice's middle name's nickname is {}",
     optional_nickname.unwrap_or("(none found)")); // prints "The Builder"
-In essence, and_then() takes a closure that returns another Option. If the Option on which and_then() is called is present, then the closure is called with the present value and the returned Option becomes the final result. Otherwise, the final result remains None. As such, in the case of jon, since the middle name is None, the get_nickname() function will not be called at all, and the above will print “(none found)”.
+{% endhighlight %}
+
+In essence, `and_then()` takes a closure that returns another `Option`. If the `Option` on which `and_then()` is called is present,
+then the closure is called with the present value and the returned `Option` becomes the final result. Otherwise, the final result
+remains `None`. As such, in the case of `jon`, since the middle name is `None`, the `get_nickname()` function will not be called at all,
+and the above will print “(none found)”.
