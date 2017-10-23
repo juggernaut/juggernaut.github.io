@@ -14,7 +14,7 @@ In Rust, `Option<T>` is an _enum_ that can either be `None` (no value present) o
 
 ## Example
 Consider a struct that represents a person’s full name. The first and last names are mandatory, whereas the middle name
- may not be specified. We can represent such a struct like this [^1]:
+ may or may not be present. We can represent such a struct like this [^1]:
 
 {% highlight rust %}
 struct FullName {
@@ -44,14 +44,15 @@ Suppose we want to print the middle name if it is present. Let’s start with th
 
 {% highlight rust %}
 println!("Alice's middle name is {}", alice.middle.unwrap()); // prints Bob
-It works! Let’s try it with Jon:
 {% endhighlight %}
+
+It works! Let’s try it with Jon:
 
 {% highlight rust %}
 println!("Jon's middle name is {}", jon.middle.unwrap()); // panics
 {% endhighlight %}
 
-So, `unwrap()` panics and exits the program when the Option is empty i.e None. This is less than ideal.
+So, `unwrap()` panics and exits the program when the `Option` is empty i.e `None`. This is less than ideal.
 
 ## Pattern matching
 Since `Option` is actually just an `enum`, we can use pattern matching to print the middle name if it is present, or a default message if it is not.
