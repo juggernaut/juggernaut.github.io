@@ -87,4 +87,22 @@ if (need_fallback) {
 let call = builder.build();
 {% endhighlight %}
 
-This fails with a compile error.
+This fails with a compile error:
+<pre>
+error[E0382]: use of moved value: `builder`
+  --> src/main.rs:53:16
+   |
+52 |     builder.with_fallback_url("http://www.fallback.com");
+   |     ------- value moved here
+53 |     let call = builder.build();
+   |                ^^^^^^^ value used here after move
+</pre>
+
+We can fix this by re-assigning to builder each time a builder method is called:
+<pre>
+let mut builder = OutboundCallBuilder::new("tom", "jerry", "http://www.example.com");
+if (need_fallback) {
+    <b>builder</b> = builder.with_fallback_url("http://www.fallback.com");
+}
+let call = builder.build();
+</pre>
