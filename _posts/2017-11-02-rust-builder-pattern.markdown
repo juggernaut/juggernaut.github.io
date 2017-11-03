@@ -8,9 +8,6 @@ To begin learning Rust in earnest, I recently started writing a client library f
 Alan Kay) you want to make simple things simple but complex things possible. For example, to make an [outbound call](https://www.twilio.com/docs/api/voice/making-calls)
 with Twilio, there are three required parameters but a whole lot of optional parameters that aren't used very often.
 
-Rust does not have default function arguments, so for populating a `struct` with a large number of optional fields,
-the builder pattern is preferred. One such example is making an outbound call via Twilio.
-
 ## Need for the builder pattern
 
 All outbound call parameters can be representing as a struct that looks like this (I've omitted most of the optional parameters for brevity):
@@ -26,7 +23,7 @@ struct OutboundCall<'a> {
 }
 {% endhighlight %}
 
-This struct has a large number of fields, and as such forcing the application programmer to populate the entire struct
+This struct has a large number of fields. As such, forcing the application programmer to populate the entire struct
 consisting of mostly `None` values is unergonomic. Rust does not (yet) have default values for struct fields or default
 function arguments, although they have been [proposed](https://github.com/rust-lang/rfcs/pull/257) [^2]. A nice way to solve this is to use
 [the builder](https://en.wikipedia.org/wiki/Builder_pattern) pattern:
@@ -109,8 +106,9 @@ error[E0382]: use of moved value: `builder`
    |                ^^^^^^^ value used here after move
 </pre>
 
-Aha, this is because each builder method is taking ownership of `self` and the return is relinquishing ownership 
-back to the caller. We can make the compiler happy by re-assigning to builder each time a builder method is called,
+Aha, this is because each builder method is taking ownership of `self` and the return statement is relinquishing ownership 
+back to the caller. There's only one problem - the return value is not assigned to anything, and hence there is no owner! We can make the
+compiler happy by re-assigning to builder each time a builder method is called,
 so that the owner is not dropped prematurely:
 <pre>
 let mut builder = OutboundCallBuilder::new("tom", "jerry", "http://www.example.com");
