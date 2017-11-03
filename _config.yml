@@ -13,5 +13,3 @@ markdown: kramdown
 future: true
 #plugins:
 #  - jekyll-time-to-read
-
-theme: jekyll-theme-cayman
