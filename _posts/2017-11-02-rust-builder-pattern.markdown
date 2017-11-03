@@ -4,10 +4,16 @@ title:  "Rust: Builder pattern by example"
 date:   2017-11-02 18:40:23
 categories: rust 
 ---
-Rust does not have named arguments, so for populating a `struct` with a large number of optional fields,
+To begin learning Rust in earnest, I recently started writing a client library for Twilio. As a library writer, (quoting
+Alan Kay) you want to make simple things simple but complex things possible. For example, to make an [outbound call](https://www.twilio.com/docs/api/voice/making-calls)
+with Twilio, there are three required parameters but a whole lot of optional parameters that aren't used very often.
+
+Rust does not have default function arguments, so for populating a `struct` with a large number of optional fields,
 the builder pattern is preferred. One such example is making an outbound call via Twilio.
 
-## Example
+## Need for the builder pattern
+
+All outbound call parameters can be representing as a struct that looks like this (I've omitted most of the optional parameters for brevity):
 
 {% highlight rust %}
 struct OutboundCall<'a> {
@@ -20,22 +26,25 @@ struct OutboundCall<'a> {
 }
 {% endhighlight %}
 
-When creating an API, it is not ergonomic for the user to populate the entire struct consisting mostly of `None`
-values. We can utilize the builder pattern to expose a much nice API. Ideally, it would look something like:
+This struct has a large number of fields, and as such forcing the application programmer to populate the entire struct
+consisting of mostly `None` values is unergonomic. Rust does not (yet) have default values for struct fields or default
+function arguments, although they have been proposed. #Note about default trait# A nice way to solve this is to use
+[the builder](https://en.wikipedia.org/wiki/Builder_pattern) pattern:
 
 {% highlight rust %}
 let call = OutboundCallBuilder::new("tom", "jerry", "http://www.example.com")
     .with_fallback_url("http://fallback.com")
     .with_status_callback("http://status.com")
-    ....
+    ...
     .build();
 {% endhighlight %}
 
 Here, we only accept the mandatory fields in the constructor, and provide methods to optionally fill in the rest of
 the fields.
 
-As a Rust newbie, there are a couple of subtleties involved in implementing the builder pattern in Rust. As a first
-pass, one might expect an initial implementation to look like:
+As a Rust newbie, there were a couple of subtleties involved in implementing the builder pattern. Let's go over them.
+
+## A first pass
 
 {% highlight rust %}
 struct OutboundCallBuilder<'a> {
