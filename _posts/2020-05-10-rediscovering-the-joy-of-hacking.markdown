@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Rediscovering the joy of hacking"
-date:   2020-05-06 18:40:23
+date:   2020-05-10 18:40:23
 categories: technology python
 ---
 
@@ -69,9 +69,9 @@ I then fired up a DigitalOcean droplet, and set up a cron job to run the script 
 
 Sure enough, after a few hours, I received a notification that a window had opened up! (_Just kidding :-) true to its form, the hacky script had a bug that failed to send a notification[^4]. Luckily, I had good logging and caught that it had found an available window in the logs - I'd logged in a few hours later because I was suspicous something was broken_)
 
-Still, it was extremely refreshing to write software to solve my _own_ problem for once, without a lot of ceremony. I'd highly recommend doing this from time to time - and it just might be the thing that keeps you from being jaded by the software industry.
+Still, it was extremely refreshing to write software to solve my _own_ problem for once, with very little ceremony involved. I highly recommend doing this from time to time - and it just might be the thing that keeps you from being jaded by the software industry.
 
-[^1]: This isn't their only security issue; their homepage doesn't even support HTTPS.
+[^1]: There are multiple security issues with the platform. I'm trying to get in touch with them to get the issues fixed.
 
 [^2]: I later learned you can do this directly from Chrome dev tools - shows you I don't do frontend much.. or at all.
 
