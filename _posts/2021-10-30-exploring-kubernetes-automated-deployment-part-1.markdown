@@ -438,7 +438,7 @@ Oh, by the way, and it's obvious, but it needs to be said that this is not somet
 
 There are some flaws here - relying on plumbing between Github action workflows means that failure of any step of the workflow run would fail the deploy. Worse, it could leave our repos in an inconsistent state w.r.t to the actual cluster state. 
 
-In future blog posts, I plan to explore Kubernetes-native solutions for creating CI/CD pipelines like [ArgoCD](https://argo-cd.readthedocs.io/en/stable/)
+In future blog posts, I plan to explore Kubernetes-native solutions ~~for creating CI/CD pipelines~~ like [ArgoCD](https://argo-cd.readthedocs.io/en/stable/). UPDATE: /u/poopycakes on Reddit points out that you'd still need something like Github Actions to actually update the yaml config repo -- ArgoCD would monitor the repo and deploy on any changes.
 
 
 [^1]: Personally, I'm not a big fan of "deploy on every commit" and believe that in practice you need some manual control over the release process.
