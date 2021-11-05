@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Exploring Kubernetes: Deploying in multiple environments"
-date:   2021-11-03 14:10:32
+date:   2021-11-04 14:10:32
 categories: technology kubernetes
 ---
 
