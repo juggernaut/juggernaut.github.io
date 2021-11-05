@@ -2,10 +2,10 @@
 title: "Ameya's blog"
 #email: your-email@domain.com
 description: > # this means to ignore newlines until "baseurl:"
-  "Ameya's trysts with technology"
+  "Ameya's thoughts and meditations"
 baseurl: "" # the subpath of your site, e.g. /blog/
 url: "http://juggernaut.github.io" # the base hostname & protocol for your site
-#twitter_username: jekyllrb
+twitter_username: reentrantlok
 github_username:  juggernaut
 
 # Build settings
