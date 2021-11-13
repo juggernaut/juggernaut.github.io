@@ -266,6 +266,7 @@ We've already done all the heavy lifting to make our app ready to deploy in any 
 # Create the dbparams configmap in one go, with values sourced from a file as well as literal values
 $ kubectl -n=production create configmap dbparams \
    --from-file=cacertificate.crt \
+   --from-literal=db_name=acme_prod \
    --from-literal=db_host=private-db-postgresql-blr1-46219-do-user-998612-0.b.db.ondigitalocean.com \
    --from-literal=db_port=25060
 $ kubectl -n=staging create secret generic db-secret \
