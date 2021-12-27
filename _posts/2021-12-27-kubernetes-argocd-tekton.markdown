@@ -2,7 +2,7 @@
 layout: post
 title:  "Kubernetes: Building a CI/CD pipeline using ArgoCD, Tekton and Kaniko"
 date:   2021-12-27 14:10:32
-categories: technology kubernetes ci/cd gitops
+categories: technology kubernetes ci/cd gitops argocd tekton
 ---
 
 In a [previous post](https://www.ameyalokare.com/technology/kubernetes/ci/cd/github-actions/2021/10/30/exploring-kubernetes-automated-deployment-part-1.html), I created a simple deployment pipeline using Github Actions. A major drawback was having to trigger deployments from outside the Kubernetes cluster which risks exposing credentials. Additionally, a push-based approach means that a transient error when invoking the deployment operation would fail the pipeline and require manual intervention.
