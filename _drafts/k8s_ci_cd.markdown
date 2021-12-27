@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Kubernetes: Building a CI/CD pipeline using ArgoCD, Tekton and Kaniko"
-date:   2021-11-04 14:10:32
+date:   2021-12-27 14:10:32
 categories: technology kubernetes ci/cd gitops
 ---
 
@@ -18,12 +18,15 @@ My plan was to start with the CD portion first, keeping the CI portion in Github
 [Installation](https://argo-cd.readthedocs.io/en/stable/getting_started/#1-install-argo-cd) was straightforward. However, to expose it using an ingress rule, I had to pass "--enable-ssl-passthrough" to my ingress-nginx controller. On DigitalOcean Kubernetes, this option is not set by default, so I needed to patch the controller deployment:
 
 {% highlight bash %}
+{% raw %}
 $ kubectl -n ingress-nginx patch deployment ingress-nginx-controller --type=json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--enable-ssl-passthrough"}]'
+{% endraw %}
 {% endhighlight %}
 
 To make it easier to access from my local machine, I added a `/etc/hosts` entry with a fake hostname (argocd.empapi.io) pointing to the public IP of the ingress load balancer. Then, I created an ingress rule (note the annotations for ssl passthrough):
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -41,6 +44,7 @@ spec:
       - backend:
           serviceName: argocd-server
           servicePort: https
+{% endraw %}
 {% endhighlight %}
 
 Manifests repo
@@ -71,7 +75,13 @@ What ArgoCD does is conceptually very simple - it takes a repo with a set of man
 The basic resource type is an "Application". Let's create an ArgoCD app for the staging environment:
 
 {% highlight bash %}
-argocd app create k8s-demo-emp-api-staging --repo https://github.com/juggernaut/k8s-demo-emp-api-manifests --path manifests/staging --dest-server https://kubernetes.default.svc --dest-namespace staging
+{% raw %}
+$ argocd app create k8s-demo-emp-api-staging \
+ --repo https://github.com/juggernaut/k8s-demo-emp-api-manifests \
+ --path manifests/staging \
+ --dest-server https://kubernetes.default.svc \
+ --dest-namespace staging
+{% endraw %}
 {% endhighlight %}
 
 The command is fairly self-explanatory. Note that the destination server is the local kubernetes API server. ArgoCD can deploy to different clusters which is probably what you want in an actual production setup -- separate clusters for dev/staging/prod and ArgoCD running in an "admin" cluster capable of deploying to each.
@@ -79,6 +89,7 @@ The command is fairly self-explanatory. Note that the destination server is the 
 When you first create the app, the resources in the manifest are in state "OutOfSync":
 
 {% highlight bash %}
+{% raw %}
 $ argocd app get k8s-demo-emp-api-staging
 .....
 .....
@@ -86,17 +97,21 @@ GROUP              KIND        NAMESPACE  NAME                         STATUS   
                    Service     staging    k8s-emp-api-svc              OutOfSync  Healthy
 apps               Deployment  staging    k8s-demo-emp-api-deployment  OutOfSync  Healthy
 networking.k8s.io  Ingress     staging    ingress-to-emp-api           OutOfSync  Healthy
+{% endraw %}
 {% endhighlight %}
 
 Let's sync it:
 
 {% highlight bash %}
+{% raw %}
 $ argocd app sync k8s-demo-emp-api-staging
+{% endraw %}
 {% endhighlight %}
 
 Then, wait for it to complete:
 
-{% highlight bash}
+{% highlight bash %}
+{% raw %}
 $ argocd app wait k8s-demo-emp-api-staging
 ....
 ....
@@ -104,6 +119,7 @@ GROUP              KIND        NAMESPACE   NAME                         STATUS  
                    Service     staging  k8s-emp-api-svc                 Synced  Healthy        service/k8s-emp-api-svc configured
 apps               Deployment  staging  k8s-demo-emp-api-deployment     Synced  Healthy        deployment.apps/k8s-demo-emp-api-deployment configured
 networking.k8s.io  Ingress     staging  ingress-to-emp-api              Synced  Healthy        ingress.networking.k8s.io/ingress-to-emp-api configured
+{% endraw %}
 {% endhighlight %}
 
 You can verify that the deploy was successful by checking the deployment status as well.
@@ -126,12 +142,15 @@ Tekton is "serverless" in that you don't need to maintain a Jenkins-like server.
 We'll create two pipelines; a pipeline to test PRs, and a post-merge deployment pipeline. Let's start with a barebones version of the the "test PR" pipeline, which simply checks out a git repo and merge a PR branch locally. First, we'll need to install the `git-cli` task from the Tekton catalog:
 
 {% highlight bash %}
+{% raw %}
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-cli/0.3/git-cli.yaml
+{% endraw %}
 {% endhighlight %}
 
 The pipeline YAML that I've annotated with comments:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
@@ -172,6 +191,7 @@ spec:
             cd k8s-demo-emp-api
             git checkout -b merge-pr-$(params.prnumber)
             git merge --no-ff origin/$(params.prbranch) 
+{% endraw %}
 {% endhighlight %}
 
 I generated an SSH key-pair using `ssh-keygen` and added the public key as a [deploy key](https://docs.github.com/en/developers/overview/managing-deploy-keys) to my repo. Then, I created a directory `git-ssh-creds` with the private key inside it and created a secret out of it:
@@ -183,6 +203,7 @@ kubectl create secret generic git-ssh-creds --from-file=git-ssh-creds
 Apply the above yaml using `kubectl apply -f`. Let's create a `PipelineRun` resource that will enable us to actually run the pipeline:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
@@ -207,12 +228,15 @@ spec:
           resources:
             requests:
               storage: 1Gi # Note that DigitalOcean doesn't allow anything under 1Gi
+{% endraw %}
 {% endhighlight %}
 
 To test the pipeline, I created a dummy PR on the repo `juggernaut-patch-1`. As mentioned earlier, we bind the SSH credentials secret to the `git-ssh-creds` workspace. For the build workspace, we'll request a K8s Persistent Volume Claim (PVC) with the specified storage. The storage will be dynamically provisioned at runtime. Applying the pipeline run resource will kick off pipeline execution. You can tail logs from the pipeline run:
 
 {% highlight bash %}
+{% raw %}
 $ tkn pipelinerun logs --last -f
+{% endraw %}
 {% endhighlight %}
 
 NOTE: You will need to manually delete the pipeline run to clean up the associated PVC that is created dynamically. Use `tkn pipelinerun delete --all` to clean up all finished pipeline runs. You can also specify a pre-provisioned static PV instead to avoid dynamic provisioning.
@@ -220,6 +244,7 @@ NOTE: You will need to manually delete the pipeline run to clean up the associat
 Next, we'll verify that the PR is good by running tests. Let's create a custom task to run golang tests. There already exists a catalog task to do this, but we need one that will output a "succeded" or "failed" result that we can pass back to GitHub to set the commit status. The catalog task simply returns a non-zero status and fails the pipeline if the tests fail. Again, I've provided inline comments where required:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -256,11 +281,13 @@ spec:
         fi
         # Results are written to $(results.<resultname>.path)
         echo -n "$RESULT" | tee $(results.go-test-result.path)
+{% endraw %}
 {% endhighlight %}
 
 We can now include this task in our pipeline. Notice the `runAfter` directive to make sure we run the tests after checking out the repo - otherwise, tekton is free to run the tasks in any order (or in parallel).
 
 {% highlight yaml %}
+{% raw %}
     - name: test-emp-api
       taskRef:
         name: golang-test-write-result
@@ -274,6 +301,7 @@ We can now include this task in our pipeline. Notice the `runAfter` directive to
           value: k8s-demo-emp-api
         - name: packages
           value: ./api
+{% endraw %}
 {% endhighlight %}
 
 I've also added tasks to set Github commit status based on test success/failure, which I'll omit from this post for brevity. You can view the full pipeline YAML [here](https://github.com/juggernaut/k8s-demo-emp-api-manifests/blob/bcf204fcbb876b0cffff5e332121bfed6f2681f8/pipelines/merge-pr-pipeline.yaml)
@@ -283,12 +311,15 @@ I've also added tasks to set Github commit status based on test success/failure,
 So far, we've only manually triggered the pipeline. For it to be actually useful, we'll need to hook it up to listen to GitHub webhooks. The pipeline should be run whenever a PR is created or updated. `EventListener`s will listen to external webhooks and associated `Trigger`s will kick off pipeline execution. First, we'll create a dedicated service account to run the pipeline, instead of running it as admin:
 
 {% highlight bash %}
+{% raw %}
 $ kubectl create serviceaccount build-bot
+{% endraw %}
 {% endhighlight %}
 
 Next, specify the `EventListener`, `TriggerTemplate` and `TriggerBinding`:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
@@ -358,6 +389,7 @@ spec:
       - ref: merge-pr-trigger-template-binding
       template:
         ref: merge-pr-trigger-template
+{% endraw %}
 {% endhighlight %}
 
 The idea is that EventListener receives webhooks and passes it to a referenced `TriggerBinding` that can extract values from the webhook body and bind them to parameters. These parameters are accessible in the `TriggerTemplate` that in turn passes them to the pipeline run (yes, this seems quite convoluted!). 
@@ -365,12 +397,15 @@ The idea is that EventListener receives webhooks and passes it to a referenced `
 After you apply the above resources, you'll see a k8s service running for the event listener. Let's get the name of the service:
 
 {% highlight bash %}
+{% raw %}
 $ kubectl get el pr-listener -o=jsonpath='{.status.configuration.generatedName}'
+{% endraw %}
 {% endhighlight %}
 
-The generated name of the service in this case is `el-pr-listener`. We need to expose this service externally for GitHub to be able to access it. I have an nginx ingress already set up [TODO: talk about other ways], so I created an ingress rule for it:
+The generated name of the service in this case is `el-pr-listener`. We need to expose this service externally for GitHub to be able to access it. I have an nginx ingress already set up, so I created an ingress rule for it:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -389,6 +424,7 @@ spec:
               name: el-pr-listener
               port:
                 number: 8080
+{% endraw %}
 {% endhighlight %}
 
 Now, we're ready to create a GitHub webhook pointing to https://<Ingress_Domain>/ghwebhooks. 
@@ -400,18 +436,23 @@ We'll need to ensure that we run the pipeline only on requests legitimately orig
 Let's generate a secret string:
 
 {% highlight bash %}
+{% raw %}
 $ openssl rand -hex 20
+{% endraw %}
 {% endhighlight %}
 
 [Configure this string as a secret](https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks#setting-your-secret-token) in GitHub. Then, create a K8s secret:
 
 {% highlight bash %}
+{% raw %}
 $ kubectl create secret generic github-pr-webhook-secret --from-literal=secretToken=<generated secret>
+{% endraw %}
 {% endhighlight %}
 
 Add the Github interceptor to the event listener:
 
 {% highlight yaml %}
+{% raw %}
 interceptors:
   - name: github-interceptor
     ref:
@@ -423,24 +464,27 @@ interceptors:
       value:
         secretName: github-pr-webhook-secret
         secretKey: secretToken
+{% endraw %}
 {% endhighlight %}
 
 We still have one more minor issue -- we don't want to run the pipeline when the PR is "closed". Currently, any `pull_request` event will kick off the pipeline. [CEL interceptors](https://tekton.dev/vault/triggers-main/interceptors/#cel-interceptors) help us solve this. Add a filter that only allows "opened", "reopened" and "synchronize" PR events:
 
 {% highlight yaml %}
+{% raw %}
 - name: "CEL filter: only when PRs are opened/reopened/synchronized"
   ref:
     name: "cel"
   params:
   - name: "filter"
     value: "body.action in ['opened', 'reopened', 'synchronize']"
+{% endraw %}
 {% endhighlight %}
 
 Find the full YAML for EventListener, Tirgger and TriggerTemplate [here](https://github.com/juggernaut/k8s-demo-emp-api-manifests/blob/bcf204fcbb876b0cffff5e332121bfed6f2681f8/pipelines/triggers-merge-pr-pipeline.yaml).
 
 ## CD pipeline
 
-Let's now focus on building the continuous deployment pipeline after the PR is merged [TODO: subscript saying that it can be merged after reviews blah blah]. At a high level, it'll do the following steps:
+Let's now focus on building the continuous deployment pipeline after the PR is merged[^1]. At a high level, it'll do the following steps:
 1. On "push" event from branch "main", start the pipeline
 2. Check out repo
 3. Run unit tests
@@ -450,11 +494,12 @@ Let's now focus on building the continuous deployment pipeline after the PR is m
 7. Deploy image to `production` environment
 
 ### Building the container image
-Steps 1-3 are similar to what we already covered earlier, so I'll skip them for brevity [TODO: link to full pipeline]. Building Docker images from within a container environment could cause [security issues](https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/). Since all Tekton steps run in a container, this presents a problem for us. Cue [Kaniko](https://github.com/GoogleContainerTools/kaniko). Kaniko can build images from `Dockerfile`s without needing access to the docker daemon.
+Steps 1-3 are similar to what we already covered earlier, so I'll skip them for brevity (get the code [here](https://github.com/juggernaut/k8s-demo-emp-api-manifests/blob/bcf204fcbb876b0cffff5e332121bfed6f2681f8/pipelines/cd-pipeline.yaml#L71)) . Building Docker images from within a container environment could cause [security issues](https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/). Since all Tekton steps run in a container, this presents a problem for us. Cue [Kaniko](https://github.com/GoogleContainerTools/kaniko). Kaniko can build images from `Dockerfile`s without needing access to the docker daemon.
 
 Again, we'll make use of the Tekton catalog to reference the [kaniko task](https://github.com/tektoncd/catalog/tree/main/task/kaniko/0.5).
 
 {% highlight yaml %}
+{% raw %}
 - name: build-and-push-image
   taskRef:
     name: kaniko
@@ -474,22 +519,25 @@ Again, we'll make use of the Tekton catalog to reference the [kaniko task](https
       value: ./kaniko-dockerfile
     - name: CONTEXT
       value: ./k8s-demo-emp-api
+{% endraw %}
 {% endhighlight %}
 
 Kaniko can also push images to a registry. It looks within the "dockerconfig" workspace for a docker-style `config.json`. Create a config.json secret with your docker hub credentials:
 
 {% highlight bash %}
+{% raw %}
 $ CREDS=$(echo -n $DOCKER_HUB_USER:$DOCKER_HUB_PASSWORD | base64)
 $ cat << EOF > ./config.json
 {
-	"auths": {
-		"https://index.docker.io/v1/": {
-			"auth": "$CREDS"
-		}
-	}
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "auth": "$CREDS"
+    }
+  }
 }
 EOF
 $ kubectl create secret generic docker-config --from-file=config.json
+{% endraw %}
 {% endhighlight %}
 
 We'll mount the docker-config secret as a workspace similar to how we did the git credentials.
@@ -499,6 +547,7 @@ We'll mount the docker-config secret as a workspace similar to how we did the gi
 Now that we have our application image, we'll deploy it to staging and run some integration tests to validate it before promoting it to production. We already have the deployment piece set up with ArgoCD. All we need to do is update the image version in Git and have ArgoCD sync it. Let's run a task to `kustomize edit` to bump the image tag -- unfortunately, the Tekton catalog doesn't have one handy, so I ended up writing one myself:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -520,11 +569,13 @@ spec:
       workingDir: "$(workspaces.source.path)/$(params.context)"
       script: |
         kustomize edit set image "$(params.image)=$(params.image):$(params.tag)"
+{% endraw %}
 {% endhighlight %}
 
 And reference it from the pipeline:
 
 {% highlight yaml %}
+{% raw %}
 - name: bump-staging-image-tag
   taskRef:
     name: kustomize-set-image-tag
@@ -541,15 +592,17 @@ And reference it from the pipeline:
       value: ./k8s-demo-emp-api-manifests/manifests/staging
     - name: tag
       value: $(params.short-sha)
+{% endraw %}
 {% endhighlight %}
 
-Next, we'll commit the change to Git using the `git-cli` task (skipping details here, [TODO: see]).
+Next, we'll commit the change to Git using the `git-cli` task (skipping details here, see [code](https://github.com/juggernaut/k8s-demo-emp-api-manifests/blob/bcf204fcbb876b0cffff5e332121bfed6f2681f8/pipelines/cd-pipeline.yaml#L176)).
 
 We're now ready to sync the app using ArgoCD -- there's a minor catch, though. We've so far run the `argocd` commands as the default `admin` user which has all possible permissions. Following the principle of least privilege, we should only give the Tekton pipeline enough permissions to be able to sync the app, and not delete it for example. Additionally, we should avoid providing the admin password to the pipeline.
 
 ArgoCD has a built-in RBAC system we can use for this. Let's create a `syncbot` ArgoCD user:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -563,11 +616,13 @@ data:
   #   apiKey - allows generating API keys
   #   login - allows to login using UI
   accounts.syncbot: apiKey
+{% endraw %}
 {% endhighlight %}
 
 Create a role that can only get or sync applications, and bind it to the `syncbot` user:
 
 {% highlight yaml %}
+{% raw %}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -580,25 +635,50 @@ data:
     p, role:syncer, applications, sync, */*, allow
 
     g, syncbot, role:syncer
+{% endraw %}
 {% endhighlight %}
 
 As usual, we'll leverage the [argocd-task-sync-and-wait](https://github.com/tektoncd/catalog/tree/main/task/argocd-task-sync-and-wait/0.1) catalog task in our pipeline. The task requires a secret named `argocd-env-secret` containing credentials. Let's generate an API token for the `syncbot` user and create the required secret:
 
 {% highlight bash %}
+{% raw %}
 $ argocd account generate-token --account syncbot --expires-in 30d
 $ kubectl create secret generic argocd-env-secret --from-literal=ARGOCD_AUTH_TOKEN=<auth-token> --from-literal=ARGOCD_USERNAME=syncbot
+{% endraw %}
 {% endhighlight %}
 
 We also need to pass the ArgoCD server address. Since we are running it on the same cluster, simply give it the [K8s service DNS](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/) name:
 
 {% highlight bash %}
+{% raw %}
 $ kubectl create configmap argocd-env-configmap --from-literal=ARGOCD_SERVER=argocd-server.argocd.svc.cluster.local
+{% endraw %}
 {% endhighlight %}
 
 Finally, use the task in our pipeline:
 
-That's it! I'll skip describing a couple more steps like running integration tests and promoting the deployment to prod because they're similar to what I've already covered. In any case, you can find the full pipeline configuration here (TODO: link)
+{% highlight yaml %}
+{% raw %}
+- name: sync-staging-app
+  taskRef:
+    name: argocd-task-sync-and-wait
+  runAfter:
+    - commit-staging-image-bump
+  params:
+    - name: application-name
+      value: k8s-demo-emp-api-staging
+    - name: flags
+      value: --insecure # since argo is locally hosted, don't use in production!
+    - name: argocd-version
+      value: v2.1.7
+{% endraw %}
+{% endhighlight %}
+
+That's it! I'll skip describing a couple more steps like running integration tests and promoting the deployment to prod because they're similar to what I've already covered. In any case, you can find the full pipeline configuration [here](https://github.com/juggernaut/k8s-demo-emp-api-manifests/blob/bcf204fcbb876b0cffff5e332121bfed6f2681f8/pipelines/cd-pipeline.yaml).
 
 ## Conclusion
 
-ArgoCD and Tekton are powerful tools that can be combined to build Kubernetes-native CI/CD pipelines. The learning curve (esp. Tekton) and initial setup time are high, but in the end you get a more capable and flexible result than say, Jenkins. Also, the pain of maintaining a Jenkins server goes away. That said, there are downsides too. Writing Tekton pipelines felt similar to programming, but in YAML, and YAML is not a programming language. The experience feels clunky and error-prone, requiring a lot of trial-and-error to get right. To add to that, the documentation is subpar and provided examples use deprecated features like `PipelineResources`.
+ArgoCD and Tekton are powerful tools that can be combined to build Kubernetes-native CI/CD pipelines. The learning curve (esp. Tekton) and initial setup time are high, but in the end you get a more capable and flexible result than say, Jenkins. Also, the pain of maintaining a Jenkins server goes away. That said, there are downsides too. Writing Tekton pipelines felt similar to programming, but in YAML, and YAML is not a programming language[^2]. The experience feels clunky and error-prone, requiring a lot of trial-and-error to get right. To add to that, the documentation is subpar and provided examples use deprecated features like [PipelineResources](https://tekton.dev/docs/pipelines/resources/).
+
+[^1]: The PR would normally be reviewed by peers and would need to pass additional checks before merge.
+[^2]: For example, you cant compose Tekton tasks, or call a catalog task from a custom task. 
